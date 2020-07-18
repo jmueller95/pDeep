@@ -11,7 +11,7 @@ def set_mod_zero_buckets(buckets):
         buckets[key][mod_idx] = np.zeros(value[mod_idx].shape)
     return buckets
 def write_buckets_mgf(outfile, buckets, predict_buckets, fconfig, iontypes = ['b{}', 'y{}']):
-    def write_one(f, pepinfo, pred):#JuMu modified this function to have it return min&max m/z values
+    def write_one(f, pepinfo, pred):
         peptide, mod, charge = pepinfo.split("|")
         f.write('BEGIN IONS\n')
         f.write('TITLE=' + pepinfo + '\n')
@@ -29,7 +29,7 @@ def write_buckets_mgf(outfile, buckets, predict_buckets, fconfig, iontypes = ['b
         #if 'b{}-ModLoss' in fconfig.ion_types and 'b{}-ModLoss' in iontypes: ions['b{}-ModLoss'] = calc_ion_modloss(bions, peptide, mod, N_term = True)
         #if 'y{}-ModLoss' in fconfig.ion_types and 'y{}-ModLoss' in iontypes: ions['y{}-ModLoss'] = calc_ion_modloss(ions['y{}'], peptide, mod, N_term = False)
 
-        #Added by JuMu
+
         if 'y{}-H2O' in fconfig.ion_types and 'y{}-H2O' in iontypes: ions['y{}-H2O'] = [b - aamass.mass_H2O for b in bions]
         if 'b{}-H2O' in fconfig.ion_types and 'b{}-H2O' in iontypes: ions['b{}-H2O'] = [b - aamass.mass_H2O for b in bions]
         if 'y{}-NH3' in fconfig.ion_types and 'y{}-NH3' in iontypes: ions['y{}-NH3'] = [b - aamass.mass_NH3 for b in bions]
