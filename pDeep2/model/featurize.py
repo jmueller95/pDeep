@@ -2,7 +2,7 @@ import math
 import numpy as np
 import warnings
 import sys
-
+from werkzeug.datastructures import FileStorage
 # warnings.filterwarnings('error')
 
 base_dtype = np.int8
@@ -215,7 +215,7 @@ class Ion2Vector:
         return to_numpy(buckets)
     
     def Featurize_buckets_predict(self, peptide_list, nce, instrument):
-        if instrument in self.instrument_feature:
+        if instrument.lower() in self.instrument_feature: #JuMu: Added '.lower()' to actually include instrument in prediction
             inst_feature = self.instrument_feature[instrument.lower()]
         else:
             inst_feature = self.instrument_feature['unknown']
@@ -248,7 +248,10 @@ class Ion2Vector:
         return to_numpy(buckets)
     
     def Featurize_buckets(self, ion_file, nce, instrument):
-        f = open(ion_file)
+        if isinstance(ion_file, FileStorage):
+            f = ion_file
+        else:
+            f = open(ion_file)
         if instrument in self.instrument_feature:
             inst_feature = self.instrument_feature[instrument.lower()]
         else:

@@ -2,6 +2,7 @@ import math
 import numpy as np
 import warnings
 import sys
+from werkzeug.datastructures import FileStorage
 
 # warnings.filterwarnings('error')
 
@@ -231,7 +232,10 @@ class Ion2Vector:
         return to_numpy(buckets)
     
     def Featurize_buckets_predict(self, ion_file, nce, instrument):
-        f = open(ion_file)
+        if isinstance(ion_file, FileStorage):
+            f = ion_file
+        else:
+            f = open(ion_file)
         if instrument in self.instrument_feature:
             inst_feature = self.instrument_feature[instrument.lower()]
         else:
@@ -276,7 +280,10 @@ class Ion2Vector:
         return to_numpy(buckets)
     
     def Featurize_buckets(self, ion_file, nce, instrument):
-        f = open(ion_file)
+        if isinstance(ion_file, FileStorage):
+            f = ion_file
+        else:
+            f = open(ion_file)
         if instrument in self.instrument_feature:
             inst_feature = self.instrument_feature[instrument.lower()]
         else:

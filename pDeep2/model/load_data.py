@@ -2,6 +2,8 @@ import os
 
 from .featurize import Ion2Vector
 from .bucket_utils import merge_buckets
+from werkzeug.datastructures import FileStorage
+
 
 def load_plabel_as_buckets(filenames, config, nce, instrument, max_n_samples = 10000000000):
     ion2vec = Ion2Vector(conf = config, prev = 1, next = 1)
@@ -30,13 +32,21 @@ def load_files_as_buckets(filenames, config, nce, instrument = 'QE', max_n_sampl
 # format 'peptide	modification	charge'
 def load_peptide_file_as_buckets(filename, config, nce, instrument = 'QE'):
     peptide_list = []
-    with open(filename) as f:
-        head = f.readline()
-        lines = f.readlines()
+    if isinstance(filename, FileStorage):
+        f = filename
+    else:
+        f = open(filename)
+    head = f.readline()
+    lines = f.readlines()
+    if isinstance(head, bytes):
+        head = head.decode()
     for line in lines:
+        if isinstance(line, bytes):
+            line = line.decode()
         line = line.strip()
         if len(line) == 0: continue
         peptide_list.append(line.split("\t"))
+    f.close()
     return load_peptides_as_buckets(peptide_list, config, nce, instrument)
 
 # format (peptide,modification,charge)

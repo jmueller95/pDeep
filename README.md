@@ -1,4 +1,3 @@
 # pDeep
-Predicting MS/MS Spectra of Peptides with Deep Learning
-
-Please visit https://github.com/pFindStudio/pDeep/tree/master/pDeep2 for the improved version of pDeep --- pDeep2.
+Forked from https://github.com/pFindStudio/pDeep.
+For information on features, usage, and requirements of pDeep in general, please refer to the readme in the original repository.

@@ -1,5 +1,6 @@
 import numpy as np
 import sys
+from .tools.AAMass import aamass
 from .tools.ion_calc import *
 
 _feature_name_list = ['x', 'mod_x', 'charge', 'nce', 'instrument', 'y']
@@ -10,7 +11,7 @@ def set_mod_zero_buckets(buckets):
         buckets[key][mod_idx] = np.zeros(value[mod_idx].shape)
     return buckets
 def write_buckets_mgf(outfile, buckets, predict_buckets, fconfig, iontypes = ['b{}', 'y{}']):
-    def write_one(f, pepinfo, pred):
+    def write_one(f, pepinfo, pred):#JuMu modified this function to have it return min&max m/z values
         peptide, mod, charge = pepinfo.split("|")
         f.write('BEGIN IONS\n')
         f.write('TITLE=' + pepinfo + '\n')
@@ -25,13 +26,20 @@ def write_buckets_mgf(outfile, buckets, predict_buckets, fconfig, iontypes = ['b
         if 'y{}' in fconfig.ion_types and 'y{}' in iontypes: ions['y{}'] = calc_y_from_b(bions, pepmass)
         if 'c{}' in fconfig.ion_types and 'c{}' in iontypes: ions['c{}'] = calc_c_from_b(bions)
         if 'z{}' in fconfig.ion_types and 'z{}' in iontypes: ions['z{}'] = calc_z_from_b(bions, pepmass)
-        if 'b{}-ModLoss' in fconfig.ion_types and 'b{}-ModLoss' in iontypes: ions['b{}-ModLoss'] = calc_ion_modloss(bions, peptide, modinfo, N_term = True)
-        if 'y{}-ModLoss' in fconfig.ion_types and 'y{}-ModLoss' in iontypes: ions['y{}-ModLoss'] = calc_ion_modloss(ions['y{}'], peptide, modinfo, N_term = False)
+        #if 'b{}-ModLoss' in fconfig.ion_types and 'b{}-ModLoss' in iontypes: ions['b{}-ModLoss'] = calc_ion_modloss(bions, peptide, mod, N_term = True)
+        #if 'y{}-ModLoss' in fconfig.ion_types and 'y{}-ModLoss' in iontypes: ions['y{}-ModLoss'] = calc_ion_modloss(ions['y{}'], peptide, mod, N_term = False)
+
+        #Added by JuMu
+        if 'y{}-H2O' in fconfig.ion_types and 'y{}-H2O' in iontypes: ions['y{}-H2O'] = [b - aamass.mass_H2O for b in bions]
+        if 'b{}-H2O' in fconfig.ion_types and 'b{}-H2O' in iontypes: ions['b{}-H2O'] = [b - aamass.mass_H2O for b in bions]
+        if 'y{}-NH3' in fconfig.ion_types and 'y{}-NH3' in iontypes: ions['y{}-NH3'] = [b - aamass.mass_NH3 for b in bions]
+        if 'b{}-NH3' in fconfig.ion_types and 'b{}-NH3' in iontypes: ions['b{}-NH3'] = [b - aamass.mass_NH3 for b in bions]
+
         
         max_charge = fconfig.max_ion_charge if pre_charge >= fconfig.max_ion_charge else pre_charge
-        
+
         peak_list = []
-        
+
         for ion_type in ions.keys():
             x_ions = np.array(ions[ion_type])
             for charge in range(1, max_charge+1):
@@ -48,12 +56,32 @@ def write_buckets_mgf(outfile, buckets, predict_buckets, fconfig, iontypes = ['b
             if inten > 1e-8: f.write("%f %.8f %s\n"%(mz, inten, ion_type))
             
         f.write('END IONS\n')
-    
+        return peak_list[0][0], peak_list[-1][0] #Return the minimal and maximal m/z values
+    min_mz, max_mz = 1000,0
     with open(outfile, 'w') as f:
+        # Set dummy values for the min/max, so we can write them to the beginning later without overwriting stuff
+        f.write("MIN_MZ=000.000000\nMAX_MZ=000.000000\n")
         for key, value in buckets.items():
             preds = predict_buckets[key][-1]
             for i in range(value[-1].shape[0]):
-                write_one(f, value[-1][i], preds[i])
+                spectrum_min_mz, spectrum_max_mz = write_one(f, value[-1][i], preds[i])
+                min_mz = min(min_mz, spectrum_min_mz)
+                max_mz = max(max_mz, spectrum_max_mz)
+        #Write global min/max to beginning of file:
+        #First, pad/trim them to length 10 so they don't mess with the format
+        min_str = str(min_mz)
+        if len(min_str) < 10:
+            min_str += "0"*(10-len(min_str))
+        elif len(min_str) > 10:
+            min_str = min_str[:10]
+        max_str = str(max_mz)
+        if len(max_str) < 10:
+            max_str += "0"*(10-len(max_str))
+        elif len(max_str) > 10:
+            max_str = max_str[:10]
+        #Now actually write them
+        f.seek(0)
+        f.write("MIN_MZ={}\nMAX_MZ={}\n".format(min_str, max_str))
 def write_buckets(outfile, buckets, predict_buckets, iontypes = ['b+1', 'b+2', 'y+1', 'y+2']):
     def write_one(f, pepinfo, pred):
         f.write('BEGIN IONS\n')
