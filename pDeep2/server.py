@@ -56,15 +56,15 @@ def run_pDeep(model, fragmentation=None, nl=None):
         model_file = "model-180921-modloss/pretrain-180921-modloss.ckpt"
         nce = 0.35
     ###Adjust this part if you have other models available
-    else:
-        assert model =="nontryptic", "First Parameter must be either 'tryptic' or 'nontryptic'!"
-        if fragmentation == 'cid':
-            model_file = "CID_35/CID_35.ckpt"
-            nce = 0.35
-        else:
-            assert fragmentation == "hcd", "Second Parameter must be either 'CID' or 'HCD'!"
-            model_file = "HCD_25_27/HCD_25_27.ckpt"
-            nce = 0.25
+    # else:
+    #     assert model =="nontryptic", "First Parameter must be either 'tryptic' or 'nontryptic'!"
+    #     if fragmentation == 'cid':
+    #         model_file = "CID_35/CID_35.ckpt"
+    #         nce = 0.35
+    #     else:
+    #         assert fragmentation == "hcd", "Second Parameter must be either 'CID' or 'HCD'!"
+    #         model_file = "HCD_25_27/HCD_25_27.ckpt"
+    #         nce = 0.25
     ion_types = ['b{}', 'y{}', 'b{}-H2O', 'y{}-H2O', 'b{}-NH3', 'y{}-NH3'] if nl=="nl" else ['b{}', 'y{}']
     mod_config.SetIonTypes(ion_types)
     if flask.request.files:
